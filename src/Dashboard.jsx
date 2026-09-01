@@ -40,6 +40,7 @@ function Dashboard({ onLogout }) {
   }
 
   function handleLogout() {
+    setEntries([]);
     localStorage.removeItem("token");
     onLogout();
   }
