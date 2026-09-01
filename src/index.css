@@ -240,3 +240,36 @@ body {
   outline: 2px solid var(--brass-bright);
   outline-offset: 2px;
 }
+
+.vault-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.vault-entry-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vault-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  background: #0b0d12;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.vault-entry-site {
+  font-weight: 600;
+}
+
+.vault-entry-username {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}

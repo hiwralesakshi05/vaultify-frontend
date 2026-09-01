@@ -1,8 +1,8 @@
 import { useState } from "react";
 import LoginForm from "./LoginForm";
-import RegisterForm from "./RegisterForm";
+import RegisterForm from "./Registerform";
+import Dashboard from "./Dashboard";
 
-// The faint concentric vault-door rings + bolt marks behind the card.
 function VaultBackdrop() {
   const boltCount = 16;
   const bolts = Array.from({ length: boltCount }, (_, i) => {
@@ -25,12 +25,7 @@ function VaultBackdrop() {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // "login" or "register" — controls which form is shown when logged out.
   const [view, setView] = useState("login");
-
-  // After a successful registration, pre-fill this so the login form
-  // doesn't make the user retype their username.
   const [prefillUsername, setPrefillUsername] = useState("");
 
   function handleRegisterSuccess(username) {
@@ -47,7 +42,7 @@ function App() {
         <h1 className="vault-title">🔐 Vaultify</h1>
 
         {isLoggedIn ? (
-          <p className="vault-status">Vault unlocked. Dashboard coming next.</p>
+          <Dashboard onLogout={() => setIsLoggedIn(false)} />
         ) : view === "login" ? (
           <>
             <LoginForm
