@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
+import AddPasswordForm from "./AddPasswordForm";
 
 function Dashboard({ onLogout }) {
-  // Holds the list of saved password entries once fetched.
   const [entries, setEntries] = useState([]);
-
-  // Tracks whether we're still waiting on the initial fetch.
   const [isLoading, setIsLoading] = useState(true);
-
   const [error, setError] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
 
-  // Runs once, right after this component first appears on screen —
-  // that's what the empty [] at the end means (no dependencies).
   useEffect(() => {
     fetchVault();
   }, []);
@@ -31,8 +27,6 @@ function Dashboard({ onLogout }) {
         return;
       }
 
-      // NOTE: entries are stored as plain JSON for now — real
-      // decryption gets wired in once crypto.js is integrated.
       if (data.blob) {
         setEntries(JSON.parse(data.blob));
       } else {
@@ -50,6 +44,11 @@ function Dashboard({ onLogout }) {
     onLogout();
   }
 
+  function handleEntrySaved(updatedEntries) {
+    setEntries(updatedEntries); // update the list immediately, no refetch needed
+    setIsAdding(false);
+  }
+
   return (
     <div>
       <div className="vault-dashboard-header">
@@ -59,19 +58,33 @@ function Dashboard({ onLogout }) {
 
       {error && <div className="vault-error">⚠ {error}</div>}
 
-      {isLoading ? (
-        <p className="vault-hint">Loading your vault…</p>
-      ) : entries.length === 0 ? (
-        <p className="vault-hint">Your vault is empty. Nothing saved yet.</p>
+      {isAdding ? (
+        <AddPasswordForm
+          existingEntries={entries}
+          onSaved={handleEntrySaved}
+          onCancel={() => setIsAdding(false)}
+        />
       ) : (
-        <ul className="vault-entry-list">
-          {entries.map((entry, i) => (
-            <li key={i} className="vault-entry">
-              <span className="vault-entry-site">{entry.site}</span>
-              <span className="vault-entry-username">{entry.username}</span>
-            </li>
-          ))}
-        </ul>
+        <>
+          {isLoading ? (
+            <p className="vault-hint">Loading your vault…</p>
+          ) : entries.length === 0 ? (
+            <p className="vault-hint">Your vault is empty. Nothing saved yet.</p>
+          ) : (
+            <ul className="vault-entry-list">
+              {entries.map((entry, i) => (
+                <li key={i} className="vault-entry">
+                  <span className="vault-entry-site">{entry.site}</span>
+                  <span className="vault-entry-username">{entry.username}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button className="vault-button" style={{ marginTop: "16px" }} onClick={() => setIsAdding(true)}>
+            + Add Password
+          </button>
+        </>
       )}
     </div>
   );
