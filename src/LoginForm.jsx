@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { hexToSalt, deriveAuthKey, deriveKeyFromPassword } from "./crypto";
 
 function LoginForm({ onLoginSuccess, initialUsername = "" }) {
   const [username, setUsername] = useState(initialUsername);
-  const [authKey, setAuthKey] = useState("");
+  const [masterPassword, setMasterPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -12,6 +13,23 @@ function LoginForm({ onLoginSuccess, initialUsername = "" }) {
     setIsLoading(true);
 
     try {
+      // Step 1: fetch this user's salt (public, not sensitive).
+      const saltResponse = await fetch(`http://localhost:3000/salt/${username}`);
+      const saltData = await saltResponse.json();
+
+      if (!saltData.success) {
+        setError("Invalid credentials");
+        return;
+      }
+
+      const salt = hexToSalt(saltData.salt);
+
+      // Step 2: derive both keys locally. The Master Password itself
+      // never leaves this function.
+      const authKey = await deriveAuthKey(masterPassword, salt);
+      const encryptionKey = await deriveKeyFromPassword(masterPassword, salt);
+
+      // Step 3: send only the Auth Key to the server for verification.
       const response = await fetch("http://localhost:3000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,7 +44,10 @@ function LoginForm({ onLoginSuccess, initialUsername = "" }) {
       }
 
       localStorage.setItem("token", data.token);
-      onLoginSuccess();
+
+      // Hand the real Encryption Key up to App — it lives only in
+      // memory (React state), never localStorage, never the server.
+      onLoginSuccess(encryptionKey);
     } catch (err) {
       setError("Could not reach the server. Is it running?");
     } finally {
@@ -49,16 +70,15 @@ function LoginForm({ onLoginSuccess, initialUsername = "" }) {
       </div>
 
       <div className="vault-field">
-        <label className="vault-label" htmlFor="authKey">Auth Key</label>
+        <label className="vault-label" htmlFor="masterPassword">Master Password</label>
         <input
-          id="authKey"
+          id="masterPassword"
           type="password"
           className="vault-input mono"
-          value={authKey}
-          onChange={(e) => setAuthKey(e.target.value)}
+          value={masterPassword}
+          onChange={(e) => setMasterPassword(e.target.value)}
           autoComplete="current-password"
         />
-        <p className="vault-hint">Temporary placeholder — real PBKDF2 derivation arrives when crypto.js is wired in.</p>
       </div>
 
       {error && <div className="vault-error">⚠ {error}</div>}

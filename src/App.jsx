@@ -28,9 +28,23 @@ function App() {
   const [view, setView] = useState("login");
   const [prefillUsername, setPrefillUsername] = useState("");
 
+  // The real AES Encryption Key, held ONLY in memory (React state).
+  // Never written to localStorage, never sent anywhere.
+  const [encryptionKey, setEncryptionKey] = useState(null);
+
   function handleRegisterSuccess(username) {
     setPrefillUsername(username);
     setView("login");
+  }
+
+  function handleLoginSuccess(key) {
+    setEncryptionKey(key);
+    setIsLoggedIn(true);
+  }
+
+  function handleLogout() {
+    setEncryptionKey(null); // wipe the key from memory on logout
+    setIsLoggedIn(false);
   }
 
   return (
@@ -42,11 +56,11 @@ function App() {
         <h1 className="vault-title">🔐 Vaultify</h1>
 
         {isLoggedIn ? (
-          <Dashboard onLogout={() => setIsLoggedIn(false)} />
+          <Dashboard encryptionKey={encryptionKey} onLogout={handleLogout} />
         ) : view === "login" ? (
           <>
             <LoginForm
-              onLoginSuccess={() => setIsLoggedIn(true)}
+              onLoginSuccess={handleLoginSuccess}
               initialUsername={prefillUsername}
             />
             <p className="vault-toggle">
