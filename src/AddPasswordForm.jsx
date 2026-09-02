@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-// Cryptographically strong password generator — same crypto.getRandomValues
-// API from crypto.js, not Math.random() (which isn't secure enough for this).
 function generateStrongPassword(length = 16) {
   const charset =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -14,7 +12,7 @@ function generateStrongPassword(length = 16) {
   return password;
 }
 
-function AddPasswordForm({ existingEntries, onSaved, onCancel }) {
+function AddPasswordForm({ existingEntries, onSave, onSaved, onCancel }) {
   const [site, setSite] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +22,7 @@ function AddPasswordForm({ existingEntries, onSaved, onCancel }) {
 
   function handleGenerate() {
     setPassword(generateStrongPassword());
-    setShowPassword(true); // show it right after generating, so it's visible
+    setShowPassword(true);
   }
 
   async function handleSave(e) {
@@ -37,31 +35,19 @@ function AddPasswordForm({ existingEntries, onSaved, onCancel }) {
     }
 
     setIsLoading(true);
-    const token = localStorage.getItem("token");
-
-    // Add the new entry to whatever was already saved.
     const updatedEntries = [...existingEntries, { site, username, password }];
 
     try {
-      const response = await fetch("http://localhost:3000/vault", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        // NOTE: sent as plain JSON for now — real encryption before
-        // this step is a planned follow-up (crypto.js + salt wiring).
-        body: JSON.stringify({ blob: JSON.stringify(updatedEntries) }),
-      });
-
-      const data = await response.json();
+      // onSave handles encryption + the actual PUT request — Dashboard
+      // owns the Encryption Key, so it owns the save logic too.
+      const data = await onSave(updatedEntries);
 
       if (!data.success) {
         setError(data.message);
         return;
       }
 
-      onSaved(updatedEntries); // hand the new full list back to Dashboard
+      onSaved(updatedEntries);
     } catch (err) {
       setError("Could not reach the server.");
     } finally {

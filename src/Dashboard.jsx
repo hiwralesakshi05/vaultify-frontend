@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import AddPasswordForm from "./AddPasswordForm";
+import { encryptData, decryptData } from "./crypto";
 
-function Dashboard({ onLogout }) {
+function Dashboard({ encryptionKey, onLogout }) {
   const [entries, setEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,7 +29,11 @@ function Dashboard({ onLogout }) {
       }
 
       if (data.blob) {
-        setEntries(JSON.parse(data.blob));
+        // The blob is now real ciphertext — { iv, ciphertext } as
+        // hex strings — decrypted here, locally, using the real key.
+        const parsed = JSON.parse(data.blob);
+        const decrypted = await decryptData(encryptionKey, parsed.iv, parsed.ciphertext);
+        setEntries(decrypted);
       } else {
         setEntries([]);
       }
@@ -39,6 +44,24 @@ function Dashboard({ onLogout }) {
     }
   }
 
+  async function saveEntries(updatedEntries) {
+    const token = localStorage.getItem("token");
+
+    // Encrypt the WHOLE array locally before it ever leaves the browser.
+    const encrypted = await encryptData(encryptionKey, updatedEntries);
+
+    const response = await fetch("http://localhost:3000/vault", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ blob: JSON.stringify(encrypted) }),
+    });
+
+    return response.json();
+  }
+
   function handleLogout() {
     setEntries([]);
     localStorage.removeItem("token");
@@ -46,7 +69,7 @@ function Dashboard({ onLogout }) {
   }
 
   function handleEntrySaved(updatedEntries) {
-    setEntries(updatedEntries); // update the list immediately, no refetch needed
+    setEntries(updatedEntries);
     setIsAdding(false);
   }
 
@@ -62,6 +85,7 @@ function Dashboard({ onLogout }) {
       {isAdding ? (
         <AddPasswordForm
           existingEntries={entries}
+          onSave={saveEntries}
           onSaved={handleEntrySaved}
           onCancel={() => setIsAdding(false)}
         />
