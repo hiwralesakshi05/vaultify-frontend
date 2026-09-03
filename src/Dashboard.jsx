@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AddPasswordForm from "./AddPasswordForm";
+import TwoFactorSetup from "./TwoFactorSetup";
 import { encryptData, decryptData } from "./crypto";
 
 function Dashboard({ encryptionKey, onLogout }) {
@@ -7,6 +8,7 @@ function Dashboard({ encryptionKey, onLogout }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
 
   useEffect(() => {
     fetchVault();
@@ -77,12 +79,21 @@ function Dashboard({ encryptionKey, onLogout }) {
     <div>
       <div className="vault-dashboard-header">
         <p className="vault-status">Vault unlocked</p>
-        <button className="vault-link" onClick={handleLogout}>Log out</button>
+        <div style={{ display: "flex", gap: "16px" }}>
+          {!showTwoFactor && !isAdding && (
+            <button className="vault-link" onClick={() => setShowTwoFactor(true)}>
+              Set up 2FA
+            </button>
+          )}
+          <button className="vault-link" onClick={handleLogout}>Log out</button>
+        </div>
       </div>
 
       {error && <div className="vault-error">⚠ {error}</div>}
 
-      {isAdding ? (
+      {showTwoFactor ? (
+        <TwoFactorSetup onClose={() => setShowTwoFactor(false)} />
+      ) : isAdding ? (
         <AddPasswordForm
           existingEntries={entries}
           onSave={saveEntries}
