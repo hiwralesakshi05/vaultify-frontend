@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function TwoFactorSetup({ onClose }) {
   const [qrCode, setQrCode] = useState(null);
   const [code, setCode] = useState("");
@@ -13,7 +15,7 @@ function TwoFactorSetup({ onClose }) {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/2fa/setup", {
+      const response = await fetch(`${API_URL}/2fa/setup`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -40,7 +42,7 @@ function TwoFactorSetup({ onClose }) {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/2fa/verify", {
+      const response = await fetch(`${API_URL}/2fa/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

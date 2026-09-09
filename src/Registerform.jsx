@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { generateSalt, saltToHex, deriveAuthKey } from "./crypto";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function RegisterForm({ onRegisterSuccess }) {
   const [username, setUsername] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
@@ -25,7 +27,7 @@ function RegisterForm({ onRegisterSuccess }) {
       const salt = generateSalt();
       const authKey = await deriveAuthKey(masterPassword, salt);
 
-      const response = await fetch("http://localhost:3000/register", {
+      const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -3,6 +3,8 @@ import AddPasswordForm from "./AddPasswordForm";
 import TwoFactorSetup from "./TwoFactorSetup";
 import { encryptData, decryptData } from "./crypto";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function Dashboard({ encryptionKey, onLogout }) {
   const [entries, setEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,7 +21,7 @@ function Dashboard({ encryptionKey, onLogout }) {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/vault", {
+      const response = await fetch(`${API_URL}/vault`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -52,7 +54,7 @@ function Dashboard({ encryptionKey, onLogout }) {
     // Encrypt the WHOLE array locally before it ever leaves the browser.
     const encrypted = await encryptData(encryptionKey, updatedEntries);
 
-    const response = await fetch("http://localhost:3000/vault", {
+    const response = await fetch(`${API_URL}/vault`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

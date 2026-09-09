@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { hexToSalt, deriveAuthKey, deriveKeyFromPassword } from "./crypto";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function LoginForm({ onLoginSuccess, initialUsername = "" }) {
   const [username, setUsername] = useState(initialUsername);
   const [masterPassword, setMasterPassword] = useState("");
@@ -26,7 +28,7 @@ function LoginForm({ onLoginSuccess, initialUsername = "" }) {
       // Only re-derive keys on the FIRST submit — on the 2FA step,
       // we already have them saved from a moment ago.
       if (!needsCode) {
-        const saltResponse = await fetch(`http://localhost:3000/salt/${username}`);
+        const saltResponse = await fetch(`${API_URL}/salt/${username}`);
         const saltData = await saltResponse.json();
 
         if (!saltData.success) {
@@ -39,7 +41,7 @@ function LoginForm({ onLoginSuccess, initialUsername = "" }) {
         encryptionKey = await deriveKeyFromPassword(masterPassword, salt);
       }
 
-      const response = await fetch("http://localhost:3000/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, authKey, code: needsCode ? code : undefined }),
